@@ -1,0 +1,36 @@
+nav {
+	width: 100%;
+	background-color: #EAFF87;
+
+	&.fixed {
+		position: fixed;
+		top: 0;
+		z-index: 9999;
+
+		+ .row {
+			@include rem-calc(margin-top, 50);
+		}
+	}
+
+	ul {
+		max-width: none;
+		@include rem-calc(margin, 0, -20);
+		text-align: right;
+	}
+
+	li {
+		display: inline-block;
+	}
+
+	a {
+		@include rem-calc(padding, 0, 20);
+		color: #C60052;
+		font-weight: bold;
+		@include rem-calc(line-height, 50);
+		display: block;
+
+		&.current {
+			background-color: #ACFFE9;
+		}
+	}
+}
