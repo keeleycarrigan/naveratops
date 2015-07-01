@@ -7,8 +7,28 @@ nav {
 		top: 0;
 		z-index: 9999;
 
-		+ .row {
-			@include rem-calc(margin-top, 50);
+		// + .row {
+		// 	@include rem-calc(margin-top, 50);
+		// }
+	}
+
+	&.side {
+		background-color: transparent;
+		position: fixed;
+
+		ul {
+			padding: 0;
+			margin: 0;
+			background-color: #EAFF87;
+			text-align: left;
+		}
+
+		li {
+			display: block;
+		}
+
+		a {
+			@include rem-calc(line-height, 35);
 		}
 	}
 
@@ -29,7 +49,7 @@ nav {
 		@include rem-calc(line-height, 50);
 		display: block;
 
-		&.current {
+		&.active {
 			background-color: #ACFFE9;
 		}
 	}

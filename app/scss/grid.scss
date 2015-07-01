@@ -1,36 +1,12 @@
-// Foundation by ZURB
-// foundation.zurb.com
-// Licensed under MIT Open Source
+$row-width: $max-content-width + $column-gutter;
 
-//
-// @variables
-//
-$include-html-grid-classes: $include-html-classes !default;
-$include-xl-html-grid-classes: false !default;
-
-$row-width: 1000 !default;
-$total-columns: 12 !default;
-
-//
-// Grid Functions
-//
-
-// Deprecated: We'll drop support for this in 5.1, use grid-calc()
-@function gridCalc($colNumber, $totalColumns) {
-  @warn "gridCalc() is deprecated, use grid-calc()";
-  @return grid-calc($colNumber, $totalColumns);
-}
-
-// @FUNCTION
-// $colNumber - Found in settings file
-// $totalColumns - Found in settings file
 @function grid-calc($colNumber, $totalColumns) {
   @return percentage(($colNumber / $totalColumns));
 }
 
-//
-// @mixins
-//
+@function block-calc($rowNumber, $colNumber) {
+  @return percentage($rowNumber / $colNumber);
+}
 
 // For creating container, nested, and collapsed rows.
 //
@@ -52,7 +28,7 @@ $total-columns: 12 !default;
   @else if $behavior == collapse {
     width: 100%;
     margin: 0;
-    max-width: $row-width;
+    @include rem-calc(max-width, $row-width);
   }
 
   // use @include grid-row(nest-collapse); to collapse outer margins on a nested row
@@ -69,7 +45,6 @@ $total-columns: 12 !default;
     margin-#{$opposite-direction}: auto;
     margin-top: 0;
     margin-bottom: 0;
-    // max-width: $row-width;
     @include rem-calc(max-width, $row-width);
   }
 
@@ -77,7 +52,6 @@ $total-columns: 12 !default;
   @include clearfix();
 }
 
-// Creates a column, should be used inside of a media query to control layouts
 //
 // $columns - The number of columns this should be
 // $last-column - Is this the last column? Default: false.
@@ -120,9 +94,6 @@ $total-columns: 12 !default;
   // If a column number is given, calculate width
   @if $columns {
     width: grid-calc($columns, $total-columns);
-
-    // If last column, float naturally instead of to the right
-    @if $last-column { float: $opposite-direction; }
   }
 
   // Source Ordering, adds left/right depending on which you use.
@@ -147,33 +118,64 @@ $total-columns: 12 !default;
 
 }
 
-// Create presentational classes for grid
-//
-// $size - Name of class to use, i.e. "large" will generate .large-1, .large-2, etc.
 @mixin grid-html-classes($size) {
 
   @for $i from 0 through $total-columns - 1 {
-    .#{$size}-push-#{$i} {
+    .#{$size}-push-col-#{$i} {
       @include grid-column($push:$i, $collapse:null, $float:false);
     }
-    .#{$size}-pull-#{$i} {
+    .#{$size}-pull-col-#{$i} {
       @include grid-column($pull:$i, $collapse:null, $float:false);
+    }
+
+    @if $include-block-grid {
+      .#{$size}-push-block-#{$i} {
+        @include grid-column($push:$i, $collapse:null, $float:false);
+      }
+      .#{$size}-pull-block-#{$i} {
+        @include grid-column($pull:$i, $collapse:null, $float:false);
+      }
     }
   }
 
-  .column,
-  .columns { @include grid-column($columns:false, $position:true); }
-
-
   @for $i from 1 through $total-columns {
-    .#{$size}-#{$i} { @include grid-column($columns:$i,$collapse:null,$float:false); }
+    .#{$size}-col-#{$i} { @include grid-column($columns: $i, $collapse: null, $float: left); }
+
+    @if $include-block-grid {
+      @for $j from 1 through $total-columns {
+        .#{$size}-block-#{$i}-#{$j} {
+          width: grid-calc($i, $total-columns);
+
+          &:before {
+            padding-top: block-calc($j, $i);
+          }
+        }
+      }
+    }
   }
-
-
 
   @for $i from 0 through $total-columns - 1 {
-    .#{$size}-offset-#{$i} { @include grid-column($offset:$i, $collapse:null,$float:false); }
+    .#{$size}-offset-col-#{$i} { @include grid-column($offset: $i, $collapse: null, $float: false); }
+    .#{$size}-center-col-#{$i} { @include grid-column($columns: $i, $center: true, $collapse: null, $float: false); }
+
+    @if $include-block-grid {
+      .#{$size}-offset-block-#{$i} { @include grid-column($offset: $i, $collapse: null, $float: false); }
+      .#{$size}-center-block-#{$i} { @include grid-column($columns: $i, $center: true, $collapse: null, $float: false); }
+
+      .#{$size}-offset-top-#{$i} {
+        padding-top: grid-calc($i, $total-columns);
+      }
+
+      @for $j from 0 through $total-columns - 1 {
+        .#{$size}-offset-top-#{$i}-#{$j} {
+          .wrap {
+            margin-top: block-calc($j, $i);
+          }
+        }
+      }
+    }
   }
+
   .#{$size}-reset-order {
     margin-#{$default-float}: 0;
     margin-#{$opposite-direction}: 0;
@@ -182,89 +184,106 @@ $total-columns: 12 !default;
     float: $default-float;
   }
 
-  .column.#{$size}-centered,
-  .columns.#{$size}-centered { @include grid-column($center:true, $collapse:null, $float:false); }
-
-  .column.#{$size}-uncentered,
-  .columns.#{$size}-uncentered {
-    margin-#{$default-float}: 0;
-    margin-#{$opposite-direction}: 0;
-    float: $default-float;
+  .show-#{$size}-up {
+    display: block;
   }
 
-  // Fighting [class*="column"] + [class*="column"]:last-child
-  .column.#{$size}-centered:last-child,
-  .columns.#{$size}-centered:last-child{
-    float: none;
-  }
-
-  // Fighting .column.<previous-size>-centered:last-child
-  .column.#{$size}-uncentered:last-child,
-  .columns.#{$size}-uncentered:last-child {
-    float: $default-float;
-  }
-
-  .column.#{$size}-uncentered.opposite,
-  .columns.#{$size}-uncentered.opposite {
-    float: $opposite-direction;
+  .hide-#{$size}-up {
+    display: none;
   }
 }
 
-@if $include-html-grid-classes {
-  .row {
-    @include grid-row;
+*,
+*:before,
+*:after {
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
 
-    &.collapse {
-       > .column,
-       > .columns { @include grid-column($collapse:true, $float:false); }
+.row {
+  @include grid-row;
 
-      .row {margin-left:0; margin-right:0;}
+  &.collapse {
+    > [class*="-col"] { @include grid-column($collapse:true, $float:false); }
+
+    .row {margin-left:0; margin-right:0;}
     }
 
     .row { @include grid-row($behavior:nest);
-      &.collapse { @include grid-row($behavior:nest-collapse); }
-    }
-  }
-
-  .column,
-  .columns { @include grid-column($columns:$total-columns); }
-
-  [class*="column"] + [class*="column"]:last-child { float: $opposite-direction; }
-  [class*="column"] + [class*="column"].end { float: $default-float; }
-
-  @media #{$small} {
-    @include grid-html-classes($size:small);
-  }
-
-  @media #{$medium} {
-    @include grid-html-classes($size:medium);
-    // Old push and pull classes
-    @for $i from 0 through $total-columns - 1 {
-      .push-#{$i} {
-        @include grid-column($push:$i, $collapse:null, $float:false);
-      }
-      .pull-#{$i} {
-        @include grid-column($pull:$i, $collapse:null, $float:false);
-      }
-    }
-  }
-  @media #{$large} {
-    @include grid-html-classes($size:large);
-    @for $i from 0 through $total-columns - 1 {
-      .push-#{$i} {
-        @include grid-column($push:$i, $collapse:null, $float:false);
-      }
-      .pull-#{$i} {
-        @include grid-column($pull:$i, $collapse:null, $float:false);
-      }
-    }
+    &.collapse { @include grid-row($behavior:nest-collapse); }
   }
 }
-@if $include-xl-html-grid-classes {
-  @media #{$xlarge} {
-    @include grid-html-classes($size:xlarge);
+
+[class*="-col"] { @include grid-column($columns:$total-columns); }
+
+[class*="-col"].align-right { float: $opposite-direction; }
+
+[class*="-block"] {
+  width: 100%;
+  float: left;
+  position: relative;
+
+  &:before {
+    content: "";
+    padding-top: 100%;
+    display: block;
   }
-  // @media #{$xxlarge} {
-  //   @include grid-html-classes($size:xxlarge);
-  // }
+
+  .wrap {
+    height: 100%;
+    width: 100%;
+    @include rem-calc(padding, 5);
+    position: absolute;
+    left: 0;
+    top: 0;
+  }
+
+  .content {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  [class*="-col"] {
+    height: 100%;
+  }
+
+}
+
+@media #{$small} {
+  @include grid-html-classes($size:sm);
+}
+
+@media #{$small-only} {
+  .hide-sm {
+    display: none;
+  }
+}
+
+@media #{$medium} {
+  @include grid-html-classes($size:md);
+}
+
+@media #{$medium-only} {
+  .hide-md {
+    display: none;
+  }
+}
+
+@media #{$large} {
+  @include grid-html-classes($size:lg);
+}
+
+@media #{$large-only} {
+  .hide-lg {
+    display: none;
+  }
+}
+
+@media #{$xlarge} {
+  @include grid-html-classes($size:xl);
+
+  .hide-xl {
+    display: none;
+  }
 }
